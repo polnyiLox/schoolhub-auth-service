@@ -2,6 +2,7 @@ services:
 
   postgres:
     image: postgres:17
+    container_name: schoolhub-auth-postgres
 
     restart: unless-stopped
 
@@ -52,6 +53,7 @@ services:
       dockerfile: Dockerfile
 
     restart: unless-stopped
+    container_name: schoolhub-auth-service
 
     env_file:
       - .env

@@ -18,7 +18,6 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     global_role = sa.Enum("ADMIN", "USER", name="global_role")
-    global_role.create(op.get_bind(), checkfirst=True)
     op.create_table(
         "users",
         sa.Column("telegram_id", sa.BigInteger(), nullable=False),
