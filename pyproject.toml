@@ -42,3 +42,9 @@ ignore_missing_imports = true
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: requires PostgreSQL via Testcontainers",
+    "e2e: full HTTP business flow requiring PostgreSQL",
+]
