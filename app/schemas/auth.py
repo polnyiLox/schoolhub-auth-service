@@ -19,8 +19,8 @@ class TelegramIdentity(BaseModel):
 
 
 class TokenPair(BaseModel):
-    access_token: SecretStr
-    refresh_token: SecretStr
+    access_token: str = Field(min_length=1)
+    refresh_token: str = Field(min_length=1)
     token_type: Literal["bearer"] = "bearer"
     expires_in: int = Field(gt=0)
 
