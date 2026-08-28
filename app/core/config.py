@@ -1,29 +1,36 @@
 from functools import lru_cache
+from urllib.parse import quote
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class DataBaseSettings(BaseModel):
-    user: str
-    password: str
-    host: str
-    port: int
-    name: str
+class DatabaseSettings(BaseModel):
+    user: str = Field(min_length=1)
+    password: str = Field(min_length=1)
+    host: str = Field(min_length=1)
+    port: int = Field(ge=1, le=65_535)
+    name: str = Field(min_length=1)
+    pool_size: int = Field(default=10, ge=1)
+    max_overflow: int = Field(default=20, ge=0)
+    pool_recycle_seconds: int = Field(default=1_800, ge=1)
 
     @property
     def url(self) -> str:
-        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+        user = quote(self.user, safe="")
+        password = quote(self.password, safe="")
+        database = quote(self.name, safe="")
+        return f"postgresql+asyncpg://{user}:{password}@{self.host}:{self.port}/{database}"
 
 
 class ApiSettings(BaseModel):
-    v1_prefix: str
-    host: str
-    port: int
+    v1_prefix: str = Field(pattern=r"^/[^/].*$")
+    host: str = Field(min_length=1)
+    port: int = Field(ge=1, le=65_535)
     reload: bool
 
 
-class MIddlewareSettings(BaseModel):
+class MiddlewareSettings(BaseModel):
     allow_origins: list[str]
     allow_methods: list[str]
     allow_headers: list[str]
@@ -31,16 +38,17 @@ class MIddlewareSettings(BaseModel):
 
 
 class Settings(BaseSettings):
-    db: DataBaseSettings
+    db: DatabaseSettings
     api: ApiSettings
-    middleware: MIddlewareSettings
+    middleware: MiddlewareSettings
+    admin_telegram_ids: set[int] = Field(default_factory=set)
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="APP_CONFIG__",
         env_nested_delimiter="__",
         extra="ignore",
-        case_sensitive=False
+        case_sensitive=False,
     )
 
 
