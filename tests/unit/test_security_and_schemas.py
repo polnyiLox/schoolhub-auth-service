@@ -106,8 +106,8 @@ async def test_access_token_cannot_be_used_as_refresh(provider, user):
 @pytest.mark.asyncio
 async def test_modified_jwt_is_rejected(provider, user):
     issued = await provider.issue_token_pair(user)
-    token = issued.tokens.access_token[:-1] + (
-        "a" if issued.tokens.access_token[-1] != "a" else "b"
-    )
+    header, payload, signature = issued.tokens.access_token.split(".")
+    signature = ("a" if signature[0] != "a" else "b") + signature[1:]
+    token = ".".join((header, payload, signature))
     with pytest.raises(AuthenticationError):
         await provider.verify_access_token(token)

@@ -72,6 +72,15 @@ async def test_logout_returns_204(client, auth_service):
 
 
 @pytest.mark.asyncio
+async def test_verify_returns_trusted_identity_headers(client, user_service, user):
+    user_service.get_current.return_value = UserRead.model_validate(user)
+    response = await client.get("/v1/auth/verify")
+    assert response.status_code == 204
+    assert response.headers["X-User-ID"] == str(user.id)
+    assert response.headers["X-Telegram-ID"] == str(user.telegram_id)
+
+
+@pytest.mark.asyncio
 async def test_get_me_returns_user(client, user_service, user):
     user_service.get_current.return_value = UserRead.model_validate(user)
     response = await client.get("/v1/users/me")
