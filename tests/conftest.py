@@ -26,6 +26,10 @@ os.environ.setdefault("APP_CONFIG__MIDDLEWARE__ALLOW_ORIGINS", "[]")
 os.environ.setdefault("APP_CONFIG__MIDDLEWARE__ALLOW_METHODS", "[]")
 os.environ.setdefault("APP_CONFIG__MIDDLEWARE__ALLOW_HEADERS", "[]")
 os.environ.setdefault("APP_CONFIG__MIDDLEWARE__ALLOW_CREDENTIALS", "false")
+os.environ.setdefault("APP_CONFIG__SECURITY__TELEGRAM_BOT_TOKEN", "test-bot-token")
+os.environ.setdefault(
+    "APP_CONFIG__SECURITY__JWT_SECRET", "test-secret-that-is-at-least-32-characters"
+)
 
 
 # ============================================================

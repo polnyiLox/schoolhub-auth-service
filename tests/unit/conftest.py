@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import UserORM
 from app.enums import GlobalRole
-from app.repositories import UserRepository
+from app.repositories import RefreshTokenRepository, UserRepository
 from app.schemas import CurrentPrincipal
 from app.security import AuthSecurityProvider
 
@@ -51,6 +51,11 @@ def session() -> MagicMock:
 @pytest.fixture
 def users() -> AsyncMock:
     return AsyncMock(spec=UserRepository)
+
+
+@pytest.fixture
+def refresh_tokens() -> AsyncMock:
+    return AsyncMock(spec=RefreshTokenRepository)
 
 
 @pytest.fixture

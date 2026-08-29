@@ -5,7 +5,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.api.dependencies import get_auth_service, get_current_principal, get_user_service
-from app.exceptions import AccessDeniedError, SecurityProviderNotConfiguredError, UserNotFoundError
+from app.exceptions import AccessDeniedError, InvalidRefreshTokenError, UserNotFoundError
 from app.main import app
 from app.schemas import AuthResult, TokenPair, UserList, UserRead
 
@@ -48,11 +48,27 @@ async def test_auth_endpoint_validates_empty_payload(client):
 
 
 @pytest.mark.asyncio
-async def test_unconfigured_security_maps_to_503(client, auth_service):
-    auth_service.authenticate_telegram.side_effect = SecurityProviderNotConfiguredError()
-    response = await client.post("/v1/auth/telegram", json={"init_data": "signed"})
-    assert response.status_code == 503
-    assert response.json()["error"]["code"] == "security_provider_not_configured"
+async def test_invalid_refresh_maps_to_401(client, auth_service):
+    auth_service.refresh.side_effect = InvalidRefreshTokenError()
+    response = await client.post("/v1/auth/refresh", json={"refresh_token": "invalid"})
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "invalid_refresh_token"
+
+
+@pytest.mark.asyncio
+async def test_refresh_endpoint_returns_rotated_pair(client, auth_service):
+    auth_service.refresh.return_value = TokenPair(
+        access_token="new-access", refresh_token="new-refresh", expires_in=900
+    )
+    response = await client.post("/v1/auth/refresh", json={"refresh_token": "old"})
+    assert response.status_code == 200
+    assert response.json()["refresh_token"] == "new-refresh"
+
+
+@pytest.mark.asyncio
+async def test_logout_returns_204(client, auth_service):
+    response = await client.post("/v1/auth/logout", json={"refresh_token": "token"})
+    assert response.status_code == 204
 
 
 @pytest.mark.asyncio

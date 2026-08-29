@@ -1,11 +1,18 @@
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.enums import GlobalRole
-from app.repositories import UserRepository
-from app.schemas import CurrentPrincipal, TelegramIdentity, TelegramLogin, TokenPair
+from app.repositories import RefreshTokenRepository, UserRepository
+from app.schemas import (
+    CurrentPrincipal,
+    IssuedTokenPair,
+    TelegramIdentity,
+    TelegramLogin,
+    TokenPair,
+)
 from app.security import AuthSecurityProvider
 from app.services import AuthService, UserService
 
@@ -13,11 +20,18 @@ pytestmark = pytest.mark.integration
 
 
 class FakeSecurity(AuthSecurityProvider):
+    def __init__(self):
+        pass
+
     async def validate_telegram_init_data(self, init_data: str) -> TelegramIdentity:
         return TelegramIdentity(telegram_id=int(init_data), first_name="Integration")
 
-    async def issue_token_pair(self, user) -> TokenPair:
-        return TokenPair(access_token=str(user.id), refresh_token="refresh", expires_in=900)
+    async def issue_token_pair(self, user) -> IssuedTokenPair:
+        return IssuedTokenPair(
+            tokens=TokenPair(access_token=str(user.id), refresh_token="refresh", expires_in=900),
+            refresh_token_id=uuid4(),
+            refresh_expires_at=datetime.now(UTC) + timedelta(days=1),
+        )
 
 
 @pytest.mark.asyncio
@@ -42,9 +56,13 @@ async def test_database_enforces_unique_telegram_id(session):
 @pytest.mark.asyncio
 async def test_auth_service_persists_admin(session):
     repository = UserRepository(session)
-    result = await AuthService(session, repository, FakeSecurity(), {8_003}).authenticate_telegram(
-        TelegramLogin(init_data="8003")
-    )
+    result = await AuthService(
+        session,
+        repository,
+        RefreshTokenRepository(session),
+        FakeSecurity(),
+        {8_003},
+    ).authenticate_telegram(TelegramLogin(init_data="8003"))
     loaded = await repository.get_by_telegram_id(8_003)
     assert result.user.global_role is GlobalRole.ADMIN
     assert loaded is not None
