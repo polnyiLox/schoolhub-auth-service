@@ -8,6 +8,8 @@ from app.api.exception_handlers import register_exception_handlers
 from app.api.routers.v1 import router as v1_router
 from app.core.config import settings
 from app.core.health import router as health_router
+from app.core.metrics import MetricsMiddleware
+from app.core.metrics import router as metrics_router
 from app.db.session import engine_dispose
 
 logger = logging.getLogger(__name__)
@@ -25,8 +27,10 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="SchoolHub Auth Service", lifespan=lifespan)
 app.include_router(health_router)
+app.include_router(metrics_router)
 app.include_router(v1_router)
 register_exception_handlers(app)
+app.add_middleware(MetricsMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.metrics import AUTH_SUCCESSES, REFRESH_ROTATIONS
 from app.enums import GlobalRole
 from app.exceptions import InvalidRefreshTokenError, UserInactiveError, UserNotFoundError
 from app.repositories import RefreshTokenRepository, UserRepository
@@ -56,6 +57,7 @@ class AuthService:
             )
 
         logger.info("Telegram authentication completed: user_id=%s", user.id)
+        AUTH_SUCCESSES.inc()
         return AuthResult(user=UserRead.model_validate(user), tokens=issued.tokens)
 
     async def refresh(self, request: RefreshTokenRequest) -> TokenPair:
@@ -95,6 +97,7 @@ class AuthService:
         if invalid or issued is None:
             raise InvalidRefreshTokenError
         logger.info("Refresh token rotated: user_id=%s", claims.user_id)
+        REFRESH_ROTATIONS.inc()
         return issued.tokens
 
     async def logout(self, request: RefreshTokenRequest) -> None:
