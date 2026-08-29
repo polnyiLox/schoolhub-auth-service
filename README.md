@@ -8,23 +8,27 @@
 
 ```text
 HTTP API -> Auth/User Service -> User Repository -> PostgreSQL
-                     |
-                     -> AuthSecurityProvider (точка расширения)
+                     -> Telegram initData HMAC verification
+                     -> JWT access/refresh tokens
 ```
 
-`AuthSecurityProvider` намеренно работает в режиме fail-closed. Криптографическую проверку Telegram
-`initData`, подпись JWT и проверку JWT необходимо реализовать в
-`app/security/provider.py`. До этого `POST /v1/auth/telegram` и Bearer-аутентификация возвращают
-`503`, а не принимают неподтверждённые данные.
+Telegram `initData` проверяется по алгоритму Telegram Mini Apps с контролем срока жизни. JWT
+проверяются по подписи, issuer, audience, типу и сроку действия. Refresh-токены ротируются,
+хранятся в PostgreSQL в виде SHA-256 hash; повторное использование отозванного токена отзывает
+всю пользовательскую сессию.
 
 ## API
 
 - `POST /v1/auth/telegram` — проверка Telegram initData, регистрация/обновление профиля, выдача токенов;
+- `POST /v1/auth/refresh` — одноразовая ротация refresh-токена;
+- `POST /v1/auth/logout` — отзыв текущего refresh-токена;
+- `GET /v1/auth/verify` — внутренняя проверка access token для Nginx `auth_request`;
 - `GET /v1/users/me` — профиль текущего пользователя;
 - `GET /v1/users` — список пользователей, только `ADMIN`;
 - `PATCH /v1/users/{user_id}/status` — активация/деактивация, только `ADMIN`;
 - `GET /health/live` — liveness;
 - `GET /health/ready` — readiness с проверкой PostgreSQL.
+- `GET /metrics` — Prometheus metrics.
 
 ## Запуск
 
