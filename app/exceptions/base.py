@@ -12,9 +12,9 @@ class AuthenticationError(AppError):
     message = "Authentication failed"
 
 
-class SecurityProviderNotConfiguredError(AppError):
-    code = "security_provider_not_configured"
-    message = "Authentication security provider is not configured"
+class InvalidRefreshTokenError(AuthenticationError):
+    code = "invalid_refresh_token"
+    message = "Refresh token is invalid, expired, or revoked"
 
 
 class UserNotFoundError(AppError):

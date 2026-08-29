@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -23,6 +24,22 @@ class TokenPair(BaseModel):
     refresh_token: str = Field(min_length=1)
     token_type: Literal["bearer"] = "bearer"
     expires_in: int = Field(gt=0)
+
+
+class IssuedTokenPair(BaseModel):
+    tokens: TokenPair
+    refresh_token_id: UUID
+    refresh_expires_at: datetime
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: SecretStr
+
+
+class RefreshTokenClaims(BaseModel):
+    user_id: UUID
+    token_id: UUID
+    expires_at: datetime
 
 
 class AuthResult(BaseModel):

@@ -1,1 +1,1 @@
-from .provider import AuthSecurityProvider, auth_security_provider
+from .provider_impl import AuthSecurityProvider, auth_security_provider

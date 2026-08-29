@@ -1,7 +1,7 @@
 from functools import lru_cache
 from urllib.parse import quote
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -37,10 +37,22 @@ class MiddlewareSettings(BaseModel):
     allow_credentials: bool
 
 
+class SecuritySettings(BaseModel):
+    telegram_bot_token: SecretStr
+    jwt_secret: SecretStr = Field(min_length=32)
+    jwt_algorithm: str = Field(default="HS256", pattern=r"^HS(256|384|512)$")
+    jwt_issuer: str = Field(default="schoolhub-auth", min_length=1)
+    jwt_audience: str = Field(default="schoolhub-api", min_length=1)
+    access_token_ttl_seconds: int = Field(default=900, ge=60, le=86_400)
+    refresh_token_ttl_seconds: int = Field(default=2_592_000, ge=300)
+    telegram_init_data_ttl_seconds: int = Field(default=300, ge=30, le=3_600)
+
+
 class Settings(BaseSettings):
     db: DatabaseSettings
     api: ApiSettings
     middleware: MiddlewareSettings
+    security: SecuritySettings
     admin_telegram_ids: set[int] = Field(default_factory=set)
 
     model_config = SettingsConfigDict(
