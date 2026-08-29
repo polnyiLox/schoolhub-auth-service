@@ -9,7 +9,7 @@ from app.exceptions import (
     AccessDeniedError,
     AppError,
     AuthenticationError,
-    SecurityProviderNotConfiguredError,
+    InvalidRefreshTokenError,
     SelfDeactivationError,
     UserInactiveError,
     UserNotFoundError,
@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 
 ERROR_STATUS: dict[type[AppError], int] = {
     AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+    InvalidRefreshTokenError: status.HTTP_401_UNAUTHORIZED,
     AccessDeniedError: status.HTTP_403_FORBIDDEN,
     UserInactiveError: status.HTTP_403_FORBIDDEN,
     UserNotFoundError: status.HTTP_404_NOT_FOUND,
     SelfDeactivationError: status.HTTP_409_CONFLICT,
-    SecurityProviderNotConfiguredError: status.HTTP_503_SERVICE_UNAVAILABLE,
 }
 
 

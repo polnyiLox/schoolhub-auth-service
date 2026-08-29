@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.db.session import get_session
 from app.exceptions import AuthenticationError
-from app.repositories import UserRepository
+from app.repositories import RefreshTokenRepository, UserRepository
 from app.schemas import CurrentPrincipal
 from app.security import auth_security_provider
 from app.services import AuthService, UserService
@@ -23,10 +23,22 @@ def get_user_repository(session: SessionDep) -> UserRepository:
 UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
 
 
-def get_auth_service(session: SessionDep, users: UserRepositoryDep) -> AuthService:
+def get_refresh_token_repository(session: SessionDep) -> RefreshTokenRepository:
+    return RefreshTokenRepository(session)
+
+
+RefreshTokenRepositoryDep = Annotated[RefreshTokenRepository, Depends(get_refresh_token_repository)]
+
+
+def get_auth_service(
+    session: SessionDep,
+    users: UserRepositoryDep,
+    refresh_tokens: RefreshTokenRepositoryDep,
+) -> AuthService:
     return AuthService(
         session=session,
         users=users,
+        refresh_tokens=refresh_tokens,
         security=auth_security_provider,
         admin_telegram_ids=settings.admin_telegram_ids,
     )
