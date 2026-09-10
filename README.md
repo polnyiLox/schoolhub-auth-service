@@ -1,7 +1,7 @@
 # SchoolHub Auth Service
 
 Сервис идентификации пользователей SchoolHub. Он хранит связь между Telegram-пользователем и
-глобальной ролью (`ADMIN`/`USER`), выдаёт профиль текущего пользователя и позволяет администратору
+глобальной ролью (`admin`/`user`), выдаёт профиль текущего пользователя и позволяет администратору
 включать или отключать аккаунты.
 
 ## Архитектура
@@ -22,10 +22,10 @@ Telegram `initData` проверяется по алгоритму Telegram Mini
 - `POST /v1/auth/telegram` — проверка Telegram initData, регистрация/обновление профиля, выдача токенов;
 - `POST /v1/auth/refresh` — одноразовая ротация refresh-токена;
 - `POST /v1/auth/logout` — отзыв текущего refresh-токена;
-- `GET /v1/auth/verify` — внутренняя проверка access token для Nginx `auth_request`;
+- `GET /v1/auth/verify` — внутренняя проверка access token для API Gateway;
 - `GET /v1/users/me` — профиль текущего пользователя;
-- `GET /v1/users` — список пользователей, только `ADMIN`;
-- `PATCH /v1/users/{user_id}/status` — активация/деактивация, только `ADMIN`;
+- `GET /v1/users` — список пользователей, только `admin`;
+- `PATCH /v1/users/{user_id}/status` — активация/деактивация, только `admin`;
 - `GET /health/live` — liveness;
 - `GET /health/ready` — readiness с проверкой PostgreSQL.
 - `GET /metrics` — Prometheus metrics.
@@ -53,14 +53,17 @@ docker compose up --build
 ```bash
 uv run ruff check app tests alembic
 uv run mypy app
-uv run pytest tests/unit -q
-uv run pytest tests/integration tests/e2e -q  # нужен Docker
+uv run python -m pytest tests/unit -q
+uv run python -m pytest tests/integration tests/e2e -q  # нужен Docker
 ```
 
 ## Переменные окружения
 
 Все настройки имеют префикс `APP_CONFIG__`; полный пример находится в `.env.example`.
 `APP_CONFIG__ADMIN_TELEGRAM_IDS` — JSON-массив Telegram ID, которым при первой регистрации
-назначается глобальная роль `ADMIN`. Существующая роль автоматически не повышается.
+назначается глобальная роль `admin`. Существующая роль автоматически не повышается.
 
 Секреты, токены, пароли и Telegram initData не должны попадать в логи или Git.
+
+Полный запуск всех компонентов описан в репозитории
+[School Service](https://github.com/polnyiLox/schoolhub-school-service#полное-развертывание-schoolhub).
