@@ -38,6 +38,18 @@ def signed_init_data(*, auth_date: int | None = None, first_name: str = "Sasha")
     return urlencode(fields)
 
 
+@pytest.mark.asyncio
+async def test_telegram_init_data_remains_valid_after_five_minutes():
+    config = SecuritySettings(
+        telegram_bot_token=SecretStr("bot-token"),
+        jwt_secret=SecretStr("a-secure-test-key-with-at-least-32-characters"),
+    )
+    provider = AuthSecurityProvider(config)
+    auth_date = int(datetime.now(UTC).timestamp()) - 3600
+    identity = await provider.validate_telegram_init_data(signed_init_data(auth_date=auth_date))
+    assert identity.telegram_id == 100
+
+
 def test_login_hides_init_data_in_repr():
     assert "secret" not in repr(TelegramLogin(init_data="secret"))
 

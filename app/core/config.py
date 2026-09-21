@@ -45,7 +45,7 @@ class SecuritySettings(BaseModel):
     jwt_audience: str = Field(default="schoolhub-api", min_length=1)
     access_token_ttl_seconds: int = Field(default=900, ge=60, le=86_400)
     refresh_token_ttl_seconds: int = Field(default=2_592_000, ge=300)
-    telegram_init_data_ttl_seconds: int = Field(default=300, ge=30, le=3_600)
+    telegram_init_data_ttl_seconds: int = Field(default=86_400, ge=30, le=86_400)
 
 
 class Settings(BaseSettings):
