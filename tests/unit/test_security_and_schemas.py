@@ -26,11 +26,13 @@ def provider() -> AuthSecurityProvider:
     )
 
 
-def signed_init_data(*, auth_date: int | None = None, first_name: str = "Sasha") -> str:
+def signed_init_data(
+    *, auth_date: int | None = None, first_name: str = "Sasha", user: dict | None = None
+) -> str:
     fields = {
         "auth_date": str(auth_date or int(datetime.now(UTC).timestamp())),
         "query_id": "query",
-        "user": json.dumps({"id": 100, "first_name": first_name}, separators=(",", ":")),
+        "user": json.dumps(user or {"id": 100, "first_name": first_name}, separators=(",", ":")),
     }
     check = "\n".join(f"{key}={value}" for key, value in sorted(fields.items()))
     secret = hmac.new(b"WebAppData", b"bot-token", hashlib.sha256).digest()
@@ -69,6 +71,23 @@ async def test_valid_telegram_init_data_is_parsed(provider):
     identity = await provider.validate_telegram_init_data(signed_init_data())
     assert identity.telegram_id == 100
     assert identity.first_name == "Sasha"
+
+
+@pytest.mark.asyncio
+async def test_blank_optional_telegram_names_are_normalized(provider):
+    identity = await provider.validate_telegram_init_data(
+        signed_init_data(user={"id": 100, "first_name": "Sasha", "username": "", "last_name": ""})
+    )
+    assert identity.username is None
+    assert identity.last_name is None
+
+
+@pytest.mark.asyncio
+async def test_missing_first_name_uses_username(provider):
+    identity = await provider.validate_telegram_init_data(
+        signed_init_data(user={"id": 100, "username": "sasha"})
+    )
+    assert identity.first_name == "sasha"
 
 
 @pytest.mark.asyncio

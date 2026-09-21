@@ -59,14 +59,20 @@ class AuthSecurityProvider:
 
         try:
             user_data = json.loads(fields["user"])
+            if not isinstance(user_data, dict):
+                raise TypeError("Telegram user must be an object")
             return TelegramIdentity(
                 telegram_id=user_data["id"],
-                username=user_data.get("username"),
-                first_name=user_data["first_name"],
-                last_name=user_data.get("last_name"),
+                username=user_data.get("username") or None,
+                first_name=user_data.get("first_name") or user_data.get("username") or "Пользователь",
+                last_name=user_data.get("last_name") or None,
             )
         except (KeyError, TypeError, ValueError, json.JSONDecodeError, ValidationError) as exc:
-            logger.warning("Telegram init data rejected: invalid user payload")
+            if isinstance(exc, ValidationError):
+                reasons = [(error["loc"], error["type"]) for error in exc.errors()]
+            else:
+                reasons = [type(exc).__name__]
+            logger.warning("Telegram init data rejected: invalid user payload, reasons=%s", reasons)
             raise AuthenticationError from exc
 
     async def issue_token_pair(self, user: UserORM) -> IssuedTokenPair:
