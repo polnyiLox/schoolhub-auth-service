@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 from urllib.parse import parse_qsl
 from uuid import UUID, uuid4
@@ -21,6 +22,8 @@ from app.schemas import (
     TokenPair,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class AuthSecurityProvider:
     def __init__(self, config: SecuritySettings) -> None:
@@ -32,6 +35,7 @@ class AuthSecurityProvider:
             provided_hash = fields.pop("hash")
             auth_date = datetime.fromtimestamp(int(fields["auth_date"]), tz=UTC)
         except (KeyError, ValueError, TypeError) as exc:
+            logger.warning("Telegram init data rejected: malformed fields")
             raise AuthenticationError from exc
 
         data_check_string = "\n".join(f"{key}={value}" for key, value in sorted(fields.items()))
@@ -44,11 +48,13 @@ class AuthSecurityProvider:
             secret_key, data_check_string.encode(), hashlib.sha256
         ).hexdigest()
         if not hmac.compare_digest(calculated_hash, provided_hash):
+            logger.warning("Telegram init data rejected: invalid signature")
             raise AuthenticationError
 
         now = datetime.now(UTC)
         age = (now - auth_date).total_seconds()
         if age < -30 or age > self._config.telegram_init_data_ttl_seconds:
+            logger.warning("Telegram init data rejected: auth date outside allowed window")
             raise AuthenticationError
 
         try:
@@ -60,6 +66,7 @@ class AuthSecurityProvider:
                 last_name=user_data.get("last_name"),
             )
         except (KeyError, TypeError, ValueError, json.JSONDecodeError, ValidationError) as exc:
+            logger.warning("Telegram init data rejected: invalid user payload")
             raise AuthenticationError from exc
 
     async def issue_token_pair(self, user: UserORM) -> IssuedTokenPair:
