@@ -23,6 +23,15 @@ async def list_users(
     return await service.list_users(principal, offset=offset, limit=limit)
 
 
+@router.get("/resolve", response_model=UserRead)
+async def resolve_user_by_username(
+    principal: CurrentPrincipalDep,
+    service: UserServiceDep,
+    username: str = Query(min_length=2, max_length=65, pattern=r"^@?[A-Za-z0-9_]{1,64}$"),
+) -> UserRead:
+    return await service.resolve_by_username(principal, username)
+
+
 @router.patch("/{user_id}/status", response_model=UserRead)
 async def update_user_status(
     user_id: UUID,

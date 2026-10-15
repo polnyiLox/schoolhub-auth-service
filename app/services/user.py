@@ -37,6 +37,18 @@ class UserService:
         users, total = await self._users.list(offset=offset, limit=limit)
         return UserList(items=[UserRead.model_validate(user) for user in users], total=total)
 
+    async def resolve_by_username(
+        self,
+        principal: CurrentPrincipal,
+        username: str,
+    ) -> UserRead:
+        self._require_admin(principal)
+        normalized = username.strip().removeprefix("@").lower()
+        user = await self._users.get_by_username(normalized)
+        if user is None or not user.is_active:
+            raise UserNotFoundError
+        return UserRead.model_validate(user)
+
     async def set_active(
         self,
         principal: CurrentPrincipal,

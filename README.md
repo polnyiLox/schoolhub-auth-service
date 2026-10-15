@@ -25,6 +25,7 @@ Telegram `initData` проверяется по алгоритму Telegram Mini
 - `GET /v1/auth/verify` — внутренняя проверка access token для API Gateway;
 - `GET /v1/users/me` — профиль текущего пользователя;
 - `GET /v1/users` — список пользователей, только `admin`;
+- `GET /v1/users/resolve?username=@name` — поиск активного пользователя по Telegram username, только `admin`;
 - `PATCH /v1/users/{user_id}/status` — активация/деактивация, только `admin`;
 - `GET /health/live` — liveness;
 - `GET /health/ready` — readiness с проверкой PostgreSQL.

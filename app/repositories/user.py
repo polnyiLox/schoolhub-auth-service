@@ -22,6 +22,11 @@ class UserRepository:
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
+    async def get_by_username(self, username: str) -> UserORM | None:
+        query = select(UserORM).where(func.lower(UserORM.username) == username.lower())
+        result = await self._session.execute(query)
+        return result.scalar_one_or_none()
+
     async def list(self, *, offset: int, limit: int) -> tuple[list[UserORM], int]:
         query = select(UserORM).order_by(UserORM.created_at.desc()).offset(offset).limit(limit)
         count_query = select(func.count()).select_from(UserORM)

@@ -103,6 +103,17 @@ async def test_list_users_rejects_invalid_limit(client):
 
 
 @pytest.mark.asyncio
+async def test_resolve_user_by_username(client, user_service, user):
+    user_service.resolve_by_username.return_value = UserRead.model_validate(user)
+
+    response = await client.get("/v1/users/resolve?username=%40student")
+
+    assert response.status_code == 200
+    user_service.resolve_by_username.assert_awaited_once()
+    assert user_service.resolve_by_username.await_args.args[1] == "@student"
+
+
+@pytest.mark.asyncio
 async def test_access_denied_maps_to_403(client, user_service):
     user_service.list_users.side_effect = AccessDeniedError()
     response = await client.get("/v1/users")

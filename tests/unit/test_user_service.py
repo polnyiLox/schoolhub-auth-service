@@ -50,6 +50,26 @@ async def test_regular_user_cannot_list_users(session, users, user_principal):
 
 
 @pytest.mark.asyncio
+async def test_admin_resolves_active_user_by_telegram_username(
+    session, users, user, admin_principal
+):
+    users.get_by_username.return_value = user
+
+    result = await UserService(session, users).resolve_by_username(admin_principal, "@Student")
+
+    assert result.telegram_id == user.telegram_id
+    users.get_by_username.assert_awaited_once_with("student")
+
+
+@pytest.mark.asyncio
+async def test_unknown_username_is_not_found(session, users, admin_principal):
+    users.get_by_username.return_value = None
+
+    with pytest.raises(UserNotFoundError):
+        await UserService(session, users).resolve_by_username(admin_principal, "@missing")
+
+
+@pytest.mark.asyncio
 async def test_admin_can_deactivate_another_user(session, users, user, admin_principal):
     users.set_active.return_value = user
     result = await UserService(session, users).set_active(admin_principal, user.id, is_active=False)
